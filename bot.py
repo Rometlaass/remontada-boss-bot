@@ -25,7 +25,7 @@ from discord.ext import commands, tasks
 # ============================== CONFIGURARE ==============================
 # Token-ul botului. Pe Railway il pui ca variabila de mediu DISCORD_TOKEN,
 # nu il scrie niciodata direct in cod daca urci fisierul pe un loc public.
-TOKEN = os.environ.get("DISCORD_TOKEN", "MTU1Mjc4NDY1NTk3NDAxMDkzMA.G3aHrC.s3aIGdBhuPHBf7N5Q10Yg3xnFDj_b1a7sFUGZk")
+TOKEN = os.environ.get("DISCORD_TOKEN", "PUNE_TOKENUL_AICI_DOAR_LOCAL")
 
 # Prefixul comenzii, ex: //vrajitoarea 15:30
 PREFIX = "//"
