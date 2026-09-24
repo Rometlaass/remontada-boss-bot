@@ -41,7 +41,7 @@ ALLOWED_ROLE_NAME = "PVP-ist"
 PING_ROLE_NAME = "remindere-bosi"
 
 # Reguli Vrajitoarea
-VRAJITOARE_INTERVAL = timedelta(hours=8)
+VRAJITOARE_INTERVAL = timedelta(hours=0.12)
 VRAJITOARE_REMIND_BEFORE = timedelta(minutes=10)
 
 # Reguli Dragonul (fix zilnic)
