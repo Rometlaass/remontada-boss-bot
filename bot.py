@@ -49,7 +49,7 @@ VRAJITOARE_INTERVAL = timedelta(hours=8)
 VRAJITOARE_REMIND_BEFORE = timedelta(minutes=10)
 
 # Reguli Dragonul (fix zilnic)
-DRAGON_SPAWN_TIME = dtime(hour=1, minute=9)  # 22:00 in fiecare zi
+DRAGON_SPAWN_TIME = dtime(hour=1, minute=19)  # 22:00 in fiecare zi
 DRAGON_REMIND_BEFORE = timedelta(minutes=10)
 DRAGON_LOCATION = "Tara de Foc"
 
