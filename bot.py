@@ -25,20 +25,20 @@ from discord.ext import commands, tasks
 # ============================== CONFIGURARE ==============================
 # Token-ul botului. Pe Railway il pui ca variabila de mediu DISCORD_TOKEN,
 # nu il scrie niciodata direct in cod daca urci fisierul pe un loc public.
-TOKEN = os.environ.get("DISCORD_TOKEN", "PUNE_TOKENUL_AICI_DOAR_LOCAL")
+TOKEN = os.environ.get("DISCORD_TOKEN", "MTU1Mjc4NDY1NTk3NDAxMDkzMA.G3aHrC.s3aIGdBhuPHBf7N5Q10Yg3xnFDj_b1a7sFUGZk")
 
 # Prefixul comenzii, ex: //vrajitoarea 15:30
 PREFIX = "//"
 
 # ID-ul canalului #boss-timers unde se trimit reminder-ele.
 # Click-dreapta pe canal -> Copy Channel ID (Developer Mode activ).
-BOSS_CHANNEL_ID = 123456789012345678
+BOSS_CHANNEL_ID = 1552771562183069747
 
 # Numele rolului care are voie sa seteze ora de spawn cu //vrajitoarea.
-ALLOWED_ROLE_NAME = "Ofițer"
+ALLOWED_ROLE_NAME = "PVP-ist"
 
 # Numele rolului care e mentionat in reminder (ex: @BossHunter).
-PING_ROLE_NAME = "Boss Hunter"
+PING_ROLE_NAME = "remindere-bosi"
 
 # Reguli Vrajitoarea
 VRAJITOARE_INTERVAL = timedelta(hours=8)
