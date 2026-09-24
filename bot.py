@@ -135,37 +135,45 @@ async def vrajitoarea_error(ctx: commands.Context, error):
 
 @tasks.loop(seconds=30)
 async def check_timers():
-    now = datetime.now(TZ)
+    try:
+        now = datetime.now(TZ)
 
-    # --- Vrajitoarea ---
-    v = timers.get("vrajitoarea")
-    if v and not v.get("reminded", False):
-        next_spawn = datetime.fromisoformat(v["next_spawn"])
-        remind_at = next_spawn - VRAJITOARE_REMIND_BEFORE
-        if now >= remind_at:
-            await send_reminder(
-                f"Vrajitoarea respawneaza in ~{int(VRAJITOARE_REMIND_BEFORE.total_seconds() // 60)} minute "
-                f"(estimat {next_spawn.strftime('%H:%M')})."
-            )
-            v["reminded"] = True
-            save_timers(timers)
+        # --- Vrajitoarea ---
+        v = timers.get("vrajitoarea")
+        if v and not v.get("reminded", False):
+            next_spawn = datetime.fromisoformat(v["next_spawn"])
+            if next_spawn.tzinfo is None:
+                # Date vechi, salvate inainte de fix-ul de fus orar - le ignoram.
+                del timers["vrajitoarea"]
+                save_timers(timers)
+            else:
+                remind_at = next_spawn - VRAJITOARE_REMIND_BEFORE
+                if now >= remind_at:
+                    await send_reminder(
+                        f"Vrajitoarea respawneaza in ~{int(VRAJITOARE_REMIND_BEFORE.total_seconds() // 60)} minute "
+                        f"(estimat {next_spawn.strftime('%H:%M')})."
+                    )
+                    v["reminded"] = True
+                    save_timers(timers)
 
-    # --- Dragonul (fix zilnic la 22:00) ---
-    today_spawn = now.replace(
-        hour=DRAGON_SPAWN_TIME.hour,
-        minute=DRAGON_SPAWN_TIME.minute,
-        second=0,
-        microsecond=0,
-    )
-    remind_at = today_spawn - DRAGON_REMIND_BEFORE
-    key = f"dragon-{now.strftime('%Y-%m-%d')}"
-    if now >= remind_at and now < today_spawn and not timers.get(key):
-        await send_reminder(
-            f"Dragonul respawneaza in ~{int(DRAGON_REMIND_BEFORE.total_seconds() // 60)} minute "
-            f"in {DRAGON_LOCATION} (ora {DRAGON_SPAWN_TIME.strftime('%H:%M')})."
+        # --- Dragonul (fix zilnic la 22:00) ---
+        today_spawn = now.replace(
+            hour=DRAGON_SPAWN_TIME.hour,
+            minute=DRAGON_SPAWN_TIME.minute,
+            second=0,
+            microsecond=0,
         )
-        timers[key] = True
-        save_timers(timers)
+        remind_at = today_spawn - DRAGON_REMIND_BEFORE
+        key = f"dragon-{now.strftime('%Y-%m-%d')}"
+        if now >= remind_at and now < today_spawn and not timers.get(key):
+            await send_reminder(
+                f"Dragonul respawneaza in ~{int(DRAGON_REMIND_BEFORE.total_seconds() // 60)} minute "
+                f"in {DRAGON_LOCATION} (ora {DRAGON_SPAWN_TIME.strftime('%H:%M')})."
+            )
+            timers[key] = True
+            save_timers(timers)
+    except Exception as e:
+        print(f"Eroare in check_timers: {e}")
 
 
 async def send_reminder(text: str):
