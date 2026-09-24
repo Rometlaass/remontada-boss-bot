@@ -18,9 +18,14 @@ al botului (ex: cand Railway redeployeaza).
 import json
 import os
 from datetime import datetime, timedelta, time as dtime
+from zoneinfo import ZoneInfo
 
 import discord
 from discord.ext import commands, tasks
+
+# Fusul orar folosit pentru toate calculele de timp (Railway ruleaza pe UTC
+# implicit, deci fara asta orele ar fi calculate gresit cu 2-3 ore diferenta).
+TZ = ZoneInfo("Europe/Bucharest")
 
 # ============================== CONFIGURARE ==============================
 # Token-ul botului. Pe Railway il pui ca variabila de mediu DISCORD_TOKEN,
@@ -31,13 +36,12 @@ TOKEN = os.environ.get("DISCORD_TOKEN", "PUNE_TOKENUL_AICI_DOAR_LOCAL")
 PREFIX = "//"
 
 # ID-ul canalului #boss-timers unde se trimit reminder-ele.
-# Click-dreapta pe canal -> Copy Channel ID (Developer Mode activ).
 BOSS_CHANNEL_ID = 1552771562183069747
 
 # Numele rolului care are voie sa seteze ora de spawn cu //vrajitoarea.
 ALLOWED_ROLE_NAME = "PVP-ist"
 
-# Numele rolului care e mentionat in reminder (ex: @BossHunter).
+# Numele rolului care e mentionat in reminder.
 PING_ROLE_NAME = "remindere-bosi"
 
 # Reguli Vrajitoarea
@@ -100,7 +104,7 @@ async def vrajitoarea(ctx: commands.Context, ora: str):
     """//vrajitoarea 15:30 -> seteaza ora de spawn curenta."""
     try:
         h, m = map(int, ora.split(":"))
-        now = datetime.now()
+        now = datetime.now(TZ)
         last_spawn = now.replace(hour=h, minute=m, second=0, microsecond=0)
         if last_spawn > now:
             last_spawn -= timedelta(days=1)
@@ -131,7 +135,7 @@ async def vrajitoarea_error(ctx: commands.Context, error):
 
 @tasks.loop(seconds=30)
 async def check_timers():
-    now = datetime.now()
+    now = datetime.now(TZ)
 
     # --- Vrajitoarea ---
     v = timers.get("vrajitoarea")
