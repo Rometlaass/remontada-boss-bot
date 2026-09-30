@@ -70,16 +70,18 @@ async def vrajitoarea(ctx: commands.Context, ora: str):
         h, m = map(int, ora.split(":"))
         now = datetime.now(TZ)
         last_spawn = now.replace(hour=h, minute=m, second=0, microsecond=0)
-        
+
         if last_spawn > now:
             last_spawn -= timedelta(days=1)
-            
+
     except ValueError:
         await ctx.send("❌ Format greșit. Folosește: `//vrajitoarea 15:30`")
         return
 
     next_spawn = last_spawn + timedelta(hours=VRAJITOARE_HOURS)
-    
+
+    # Seteaza ciclul - de acum inainte se repeta singur la fiecare 8 ore,
+    # fara sa mai fie nevoie de comanda din nou.
     timers["vrajitoarea"] = {
         "spawn_ts": next_spawn.timestamp(),
         "reminded": False
@@ -89,7 +91,8 @@ async def vrajitoarea(ctx: commands.Context, ora: str):
     await ctx.send(
         f"✅ **Vrăjitoarea setată.**\n"
         f"Ultimul spawn: `{last_spawn.strftime('%H:%M')}`\n"
-        f"Următorul spawn estimat: `{next_spawn.strftime('%d/%m %H:%M')}`"
+        f"Următorul spawn estimat: `{next_spawn.strftime('%d/%m %H:%M')}`\n"
+        f"De acum se repetă automat la fiecare {VRAJITOARE_HOURS}h, fără altă comandă."
     )
 
 @vrajitoarea.error
@@ -105,25 +108,22 @@ async def vrajitoarea_error(ctx: commands.Context, error):
 async def bosi_status(ctx: commands.Context):
     now = datetime.now(TZ)
     msg = f"📊 **Status Boși** (Ora curentă: `{now.strftime('%H:%M')}`)\n\n"
-    
+
     # Calcul Dragon
     next_dragon = now.replace(hour=DRAGON_HOUR, minute=DRAGON_MINUTE, second=0, microsecond=0)
     if now >= next_dragon:
         next_dragon += timedelta(days=1)
-    
+
     msg += f"🐉 **Dragonul:** `{next_dragon.strftime('%d/%m %H:%M')}` (în {DRAGON_LOCATION})\n"
-    
+
     # Calcul Vrajitoare
     v = timers.get("vrajitoarea")
     if v:
         next_sp = datetime.fromtimestamp(v["spawn_ts"], tz=TZ)
-        if now < next_sp:
-            msg += f"🧙‍♀️ **Vrăjitoarea:** `{next_sp.strftime('%d/%m %H:%M')}`\n"
-        else:
-            msg += f"🧙‍♀️ **Vrăjitoarea:** Momentan nesetată (ultimul spawn a expirat la `{next_sp.strftime('%H:%M')}`).\n"
+        msg += f"🧙‍♀️ **Vrăjitoarea:** `{next_sp.strftime('%d/%m %H:%M')}` (ciclu automat {VRAJITOARE_HOURS}h)\n"
     else:
         msg += "🧙‍♀️ **Vrăjitoarea:** Nu este setată o oră.\n"
-        
+
     await ctx.send(msg)
 
 
@@ -133,34 +133,46 @@ async def check_timers():
     try:
         now = datetime.now(TZ)
         channel = bot.get_channel(BOSS_CHANNEL_ID)
-        
+
         if not channel:
             return
-            
+
         role = discord.utils.get(channel.guild.roles, name=PING_ROLE_NAME)
         mention = role.mention if role else ""
 
-        # --- Vrajitoarea ---
+        # --- Vrajitoarea (ciclu recurent, non-stop) ---
         v = timers.get("vrajitoarea")
-        if v and not v.get("reminded", False):
+        if v:
             next_spawn = datetime.fromtimestamp(v["spawn_ts"], tz=TZ)
             remind_at = next_spawn - timedelta(minutes=REMINDER_MINUTES)
-            
-            if now >= remind_at and now < next_spawn:
-                await channel.send(f"{mention} ⚠️ Vrăjitoarea respawnează în ~{REMINDER_MINUTES} minute (estimat `{next_spawn.strftime('%H:%M')}`).")
-                v["reminded"] = True
-                save_timers(timers)
-            elif now >= next_spawn:
+
+            # Trimite reminder-ul o singura data per ciclu, cu 10 min inainte.
+            if not v.get("reminded", False) and now >= remind_at and now < next_spawn:
+                await channel.send(
+                    f"{mention} ⚠️ Vrăjitoarea respawnează în ~{REMINDER_MINUTES} minute "
+                    f"(estimat `{next_spawn.strftime('%H:%M')}`)."
+                )
                 v["reminded"] = True
                 save_timers(timers)
 
-        # --- Dragonul ---
+            # Dupa ce trece ora de spawn, programeaza automat urmatorul ciclu
+            # (+8h) si reseteaza reminded, ca sa continue non-stop.
+            if now >= next_spawn:
+                next_spawn = next_spawn + timedelta(hours=VRAJITOARE_HOURS)
+                v["spawn_ts"] = next_spawn.timestamp()
+                v["reminded"] = False
+                save_timers(timers)
+
+        # --- Dragonul (fix zilnic la 22:00, se repeta automat in fiecare zi) ---
         today_dragon = now.replace(hour=DRAGON_HOUR, minute=DRAGON_MINUTE, second=0, microsecond=0)
         remind_at = today_dragon - timedelta(minutes=REMINDER_MINUTES)
         today_str = now.strftime("%Y-%m-%d")
-        
+
         if now >= remind_at and now < today_dragon and timers.get("dragon_last_reminded") != today_str:
-            await channel.send(f"{mention} ⚠️ Dragonul respawnează în ~{REMINDER_MINUTES} minute în {DRAGON_LOCATION} (ora `{today_dragon.strftime('%H:%M')}`).")
+            await channel.send(
+                f"{mention} ⚠️ Dragonul respawnează în ~{REMINDER_MINUTES} minute "
+                f"în {DRAGON_LOCATION} (ora `{today_dragon.strftime('%H:%M')}`)."
+            )
             timers["dragon_last_reminded"] = today_str
             save_timers(timers)
 
