@@ -92,7 +92,6 @@ async def vrajitoarea(ctx: commands.Context, ora: str):
         f"✅ **Vrăjitoarea setată.**\n"
         f"Ultimul spawn: `{last_spawn.strftime('%H:%M')}`\n"
         f"Următorul spawn estimat: `{next_spawn.strftime('%d/%m %H:%M')}`\n"
-        f"De acum se repetă automat la fiecare {VRAJITOARE_HOURS}h, fără altă comandă."
     )
 
 @vrajitoarea.error
